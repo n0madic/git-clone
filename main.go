@@ -6,15 +6,22 @@ import (
 	"path"
 	"strings"
 
-	"gopkg.in/alecthomas/kingpin.v2"
 	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/fatih/color"
+	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
 var (
-	Directory   string
-	Repository  = kingpin.Arg("repository", "The repository to clone from.").Required().String()
-	Destination = kingpin.Arg("directory", "The name of a new Directory to clone into.").String()
-	Recursive   = kingpin.Flag("recursive", "After the clone is created, initialize all submodules within, using their default settings.").Short('r').Bool()
+	Repository   = kingpin.Arg("repository", "The repository to clone from.").Required().String()
+	Directory    = kingpin.Arg("directory", "The name of a new Directory to clone into.").String()
+	Recursive    = kingpin.Flag("recursive", "After the clone is created, initialize all submodules within, using their default settings.").Short('r').Bool()
+	Pull         = kingpin.Flag("pull", "Incorporates changes from a remote repository into the current branch (if already cloned).").Short('p').Bool()
+	RemoteName   = kingpin.Flag("origin", "Instead of using the remote name origin to keep track of the upstream repository, use <name>.").Short('o').PlaceHolder("<name>").Default("origin").String()
+	Branch       = kingpin.Flag("branch", "Instead of pointing the newly created HEAD to the branch pointed to by the cloned repository’s HEAD, point to <name> branch instead.").Short('b').PlaceHolder("<name>").String()
+	SingleBranch = kingpin.Flag("single-branch", "Clone only the history leading to the tip of a single branch, either specified by the --branch option or the primary branch remote’s HEAD points at.").Bool()
+	Depth        = kingpin.Flag("depth", "Create a shallow clone with a history truncated to the specified number of commits.").Short('d').Default("0").Int()
+	Tags         = kingpin.Flag("tags", "Tag mode (all|no|following)").Default("all").Enum("all", "no", "following")
 )
 
 func CheckIfError(err error) {
@@ -22,7 +29,7 @@ func CheckIfError(err error) {
 		return
 	}
 
-	fmt.Printf("\x1b[31;1m%s\x1b[0m\n", fmt.Sprintf("error: %s", err))
+	color.Red("%s", err)
 	os.Exit(1)
 }
 
@@ -30,26 +37,66 @@ func main() {
 
 	kingpin.Parse()
 
-	if len(*Destination) > 0 {
-		Directory = *Destination
+	var Destination string
+	if len(*Directory) > 0 {
+		Destination = *Directory
 	} else {
-		Directory = strings.TrimRight(path.Base(*Repository), ".git")
+		Destination = strings.TrimSuffix(path.Base(*Repository), ".git")
 	}
-
 	RecurseSubmodulesFlag := git.NoRecurseSubmodules
 	if *Recursive {
 		RecurseSubmodulesFlag = git.DefaultSubmoduleRecursionDepth
 	}
 
-	r, err := git.PlainClone(Directory, false, &git.CloneOptions{
+	TagsFlag := git.AllTags
+	if *Tags == "no" {
+		TagsFlag = git.NoTags
+	} else if *Tags == "following" {
+		TagsFlag = git.TagFollowing
+	}
+
+	r, err := git.PlainClone(Destination, false, &git.CloneOptions{
 		URL:               *Repository,
+		RemoteName:        *RemoteName,
 		RecurseSubmodules: RecurseSubmodulesFlag,
+		Depth:             *Depth,
+		SingleBranch:      *SingleBranch,
+		Tags:              TagsFlag,
 		Progress:          os.Stdout,
 	})
-	CheckIfError(err)
+	if err == git.ErrRepositoryAlreadyExists && *Pull {
+		color.Yellow("Repository already exists!")
+		r, err := git.PlainOpen(Destination)
+		CheckIfError(err)
+
+		w, err := r.Worktree()
+		CheckIfError(err)
+
+		color.Cyan("Try pull")
+		err = w.Pull(&git.PullOptions{RemoteName: "origin"})
+		if err == git.NoErrAlreadyUpToDate {
+			color.Green(err.Error())
+		} else {
+			CheckIfError(err)
+		}
+	} else if err != nil {
+		CheckIfError(err)
+	}
 
 	fmt.Println()
 
+	if len(*Branch) > 0 {
+		r, err := git.PlainOpen(Destination)
+		CheckIfError(err)
+
+		w, err := r.Worktree()
+		CheckIfError(err)
+
+		err = w.Checkout(&git.CheckoutOptions{
+			Branch: plumbing.ReferenceName("refs/heads/" + *Branch),
+		})
+		CheckIfError(err)
+	}
 	ref, err := r.Head()
 	CheckIfError(err)
 
