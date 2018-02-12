@@ -13,6 +13,7 @@ deploy:
   api_key:
     secure: OTvlD7ckZ6nQo46fGZe7V4wlpHM0YRY60jpnhvPG7bPeYkGBRL51/QXkLgGRQLm35ZC/W52FfPF/Vo60cUer35JPSnVIve85iOPc0Xw+6Fdco1h93tktmt4KE+uxpnolPxCJYWK2+S8eYkvTQjkyKDwnxM93UZXj7TzHAiN1SrKd8fVkySGxMGVQPT1ueWbP2Y/ggXD/5N05IMJlFDio3EI9+6gsZecp9eUn9t0xSN/chAdrKzjFu6BMViYidVYJYg9X6nmZVVGHM0IMUSsqgljnbJlbf8J0cAR6Z8Wemq5DuvSUfFGQs1YWGEdtwgi+Nze3u28TfR5+8wNWfQh0w513BlFsqqXGuEQwfpHh7B1gHUZuPVhoe05g9tC4gsLPzmdTr/mu3ga21J4hMlOo9NN18LX7Qy+IwEuB0a8LDbCcDr6yaT+noReQKqhOeUW7D/JHCzDWmTkSUOOEask3CbZuFvf/SujylczwuTnBmHhAFImankAJ3OuPvaJ8GzdXVAwf+h7JT1urIsqv4J/Kkf+sHp3b2dhbZmGXKKjxOVJ0QZ22ey6sTo3wmCXn3JM056D/1DNJRN1tHq1hXL6GYFDeDNbhT+ECQaA/GGsX/IUrYVH+r6o4gMFj5m12Hvw9nny/xeLdh4NNJJx1ywdNhKy60oizlIMI7fGBNE/g1Y0=
   file: git-clone-*
+  skip_cleanup: true
   on:
     repo: n0madic/git-clone
     tags: true
