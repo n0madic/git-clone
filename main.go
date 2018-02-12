@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"gopkg.in/src-d/go-git.v4"
+	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"github.com/fatih/color"
-	"gopkg.in/src-d/go-git.v4/plumbing"
 )
 
 var (
@@ -43,27 +43,30 @@ func main() {
 	} else {
 		Destination = strings.TrimSuffix(path.Base(*Repository), ".git")
 	}
-	RecurseSubmodulesFlag := git.NoRecurseSubmodules
+
+	CloneOptions := git.CloneOptions{
+		URL:          *Repository,
+		RemoteName:   *RemoteName,
+		Depth:        *Depth,
+		SingleBranch: *SingleBranch,
+		Progress:     os.Stdout,
+	}
+	if len(*Branch) > 0 {
+		CloneOptions.ReferenceName = plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", *Branch))
+	}
 	if *Recursive {
-		RecurseSubmodulesFlag = git.DefaultSubmoduleRecursionDepth
+		CloneOptions.RecurseSubmodules = git.DefaultSubmoduleRecursionDepth
 	}
-
-	TagsFlag := git.AllTags
-	if *Tags == "no" {
-		TagsFlag = git.NoTags
+	if *Tags == "all" {
+		CloneOptions.Tags = git.AllTags
+	} else if *Tags == "no" {
+		CloneOptions.Tags = git.NoTags
 	} else if *Tags == "following" {
-		TagsFlag = git.TagFollowing
+		CloneOptions.Tags = git.TagFollowing
 	}
 
-	r, err := git.PlainClone(Destination, false, &git.CloneOptions{
-		URL:               *Repository,
-		RemoteName:        *RemoteName,
-		RecurseSubmodules: RecurseSubmodulesFlag,
-		Depth:             *Depth,
-		SingleBranch:      *SingleBranch,
-		Tags:              TagsFlag,
-		Progress:          os.Stdout,
-	})
+	r, err := git.PlainClone(Destination, false, &CloneOptions)
+
 	if err == git.ErrRepositoryAlreadyExists && *Pull {
 		color.Yellow("Repository already exists!")
 		r, err := git.PlainOpen(Destination)
@@ -85,18 +88,6 @@ func main() {
 
 	fmt.Println()
 
-	if len(*Branch) > 0 {
-		r, err := git.PlainOpen(Destination)
-		CheckIfError(err)
-
-		w, err := r.Worktree()
-		CheckIfError(err)
-
-		err = w.Checkout(&git.CheckoutOptions{
-			Branch: plumbing.ReferenceName("refs/heads/" + *Branch),
-		})
-		CheckIfError(err)
-	}
 	ref, err := r.Head()
 	CheckIfError(err)
 
