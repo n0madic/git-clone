@@ -139,6 +139,7 @@ func main() {
 
 		ref, err := r.Head()
 		CheckIfError(err)
+		color.Green("On branch %s", path.Base(ref.Name().String()))
 
 		commit, err := r.CommitObject(ref.Hash())
 		CheckIfError(err)
