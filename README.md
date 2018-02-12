@@ -1,4 +1,6 @@
-# git-clone
+# git-clone 
+[![Build Status](https://travis-ci.org/n0madic/git-clone.svg?branch=master)](https://travis-ci.org/n0madic/git-clone)
+
 Git clone standalone.
 
 Can fetch repositories without installing Git environment!
