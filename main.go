@@ -52,8 +52,12 @@ func main() {
 		SingleBranch: *SingleBranch,
 		Progress:     os.Stdout,
 	}
+	branchRef := plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", *Branch))
+	if strings.HasPrefix(*Branch, "tags/") && *Tags != "no" {
+		branchRef = plumbing.ReferenceName(fmt.Sprintf("refs/%s", *Branch))
+	}
 	if len(*Branch) > 0 {
-		CloneOptions.ReferenceName = plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", *Branch))
+		CloneOptions.ReferenceName = branchRef
 	}
 	if *Recursive {
 		CloneOptions.RecurseSubmodules = git.DefaultSubmoduleRecursionDepth
@@ -82,7 +86,6 @@ func main() {
 
 		if len(*Branch) > 0 && !strings.HasSuffix(ref.Name().String(), *Branch) {
 			color.Cyan("Checkout remote branch %s", *Branch)
-			branchRef := plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", *Branch))
 			err = w.Checkout(&git.CheckoutOptions{
 				Branch: branchRef,
 				Force:  true,
@@ -102,7 +105,8 @@ func main() {
 			ref, err = r.Head()
 			CheckIfError(err)
 		}
-		if *Pull {
+
+		if *Pull && ref.Name().IsBranch() {
 			color.Cyan("Pull %s", ref.Name())
 			PullOptions := git.PullOptions{
 				RemoteName:    *RemoteName,
