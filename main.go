@@ -22,10 +22,12 @@ var (
 	RemoteName = kingpin.Flag("origin", "Instead of using the remote name origin to keep track of the upstream repository, use <name>.").Short('o').PlaceHolder("<name>").Default("origin").String()
 	Branch     = kingpin.Flag("branch", "Instead of pointing the newly created HEAD to the branch pointed to by the cloned repository’s HEAD, point to <name> branch instead. "+
 		"If the repository already cloned, it will simply switch the branch, and local changes will be discarded.").Short('b').PlaceHolder("<name>").String()
-	SingleBranch = kingpin.Flag("single-branch", "Clone only the history leading to the tip of a single branch, either specified by the --branch option or the primary branch remote’s HEAD points at.").Bool()
-	Depth        = kingpin.Flag("depth", "Create a shallow clone with a history truncated to the specified number of commits.").Short('d').PlaceHolder("<depth>").Int()
-	Tags         = kingpin.Flag("tags", "Tag mode (all|no|following)").Default("all").Enum("all", "no", "following")
-	LastCommit   = kingpin.Flag("last", "Print the latest commit.").Short('l').Bool()
+	SingleBranch  = kingpin.Flag("single-branch", "Clone only the history leading to the tip of a single branch, either specified by the --branch option or the primary branch remote’s HEAD points at.").Bool()
+	Depth                = kingpin.Flag("depth", "Create a shallow clone with a history truncated to the specified number of commits.").Short('d').PlaceHolder("<depth>").Int()
+	Tags                  = kingpin.Flag("tags", "Tag mode (all|no|following)").Default("all").Enum("all", "no", "following")
+	LastCommit      = kingpin.Flag("last", "Print the latest commit.").Short('l').Bool()
+	IdentityFile ssh.AuthMethod
+	err          error
 )
 
 func CheckIfError(err error) {
@@ -55,9 +57,9 @@ func main() {
 		Progress:     os.Stdout,
 	}
 	if len(*Identity) > 0 {
-		auth, err := ssh.NewPublicKeysFromFile("git", *Identity, "")
+		IdentityFile, err = ssh.NewPublicKeysFromFile("git", *Identity, "")
 		CheckIfError(err)
-		CloneOptions.Auth = auth
+		CloneOptions.Auth = IdentityFile
 	}
 	branchRef := plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", *Branch))
 	if strings.HasPrefix(*Branch, "tags/") && *Tags != "no" {
@@ -122,6 +124,9 @@ func main() {
 				Depth:         *Depth,
 				SingleBranch:  *SingleBranch,
 				Progress:      os.Stdout,
+			}
+			if len(*Identity) > 0 {
+				PullOptions.Auth = IdentityFile
 			}
 			if *Recursive {
 				PullOptions.RecurseSubmodules = git.DefaultSubmoduleRecursionDepth
