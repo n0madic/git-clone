@@ -4,10 +4,10 @@ go:
 script:
 - go get -t ./...
 - go get golang.org/x/sys/windows
-- GOOS=linux   GOARCH=386   go build -o git-clone-linux-i386
-- GOOS=linux   GOARCH=amd64 go build -o git-clone-linux-amd64
-- GOOS=windows GOARCH=386   go build -o git-clone-windows-i386.exe
-- GOOS=windows GOARCH=amd64 go build -o git-clone-windows-amd64.exe
+- GOOS=linux   GOARCH=386   go build -o git-clone-$TRAVIS_TAG-linux-i386
+- GOOS=linux   GOARCH=amd64 go build -o git-clone-$TRAVIS_TAG-linux-amd64
+- GOOS=windows GOARCH=386   go build -o git-clone-$TRAVIS_TAG-windows-i386.exe
+- GOOS=windows GOARCH=amd64 go build -o git-clone-$TRAVIS_TAG-windows-amd64.exe
 deploy:
   provider: releases
   api_key:
