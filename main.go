@@ -8,13 +8,15 @@ import (
 
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
+	"gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"github.com/fatih/color"
 )
 
 var (
 	Repository = kingpin.Arg("repository", "The repository to clone from.").Required().String()
-	Directory  = kingpin.Arg("directory", "The name of a new Directory to clone into.").String()
+	Directory  = kingpin.Arg("directory", "The name of a new directory to clone into.").String()
+	Identity   = kingpin.Flag("identity", "Selects a file from which the identity (private key) for public key ssh authentication is read.").Short('i').PlaceHolder("<file>").String()
 	Recursive  = kingpin.Flag("recursive", "After the clone is created, initialize all submodules within, using their default settings.").Short('r').Bool()
 	Pull       = kingpin.Flag("pull", "Incorporates changes from a remote repository into the current branch (if already cloned).").Short('p').Bool()
 	RemoteName = kingpin.Flag("origin", "Instead of using the remote name origin to keep track of the upstream repository, use <name>.").Short('o').PlaceHolder("<name>").Default("origin").String()
@@ -51,6 +53,11 @@ func main() {
 		Depth:        *Depth,
 		SingleBranch: *SingleBranch,
 		Progress:     os.Stdout,
+	}
+	if len(*Identity) > 0 {
+		auth, err := ssh.NewPublicKeysFromFile("git", *Identity, "")
+		CheckIfError(err)
+		CloneOptions.Auth = auth
 	}
 	branchRef := plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", *Branch))
 	if strings.HasPrefix(*Branch, "tags/") && *Tags != "no" {
