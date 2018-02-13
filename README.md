@@ -1,10 +1,14 @@
 # git-clone 
 [![Build Status](https://travis-ci.org/n0madic/git-clone.svg?branch=master)](https://travis-ci.org/n0madic/git-clone)
 
-Git clone standalone.
+Summary
+-------
+Git clone standalone. Git repository downloader.
 
 Can fetch repositories without installing Git environment!
 
+Help
+----
 ```
 usage: git-clone [<flags>] <repository> [<directory>]
 
@@ -32,3 +36,30 @@ Args:
   <repository>   The repository to clone from.
   [<directory>]  The name of a new directory to clone into.
 ```
+
+Usage
+-----
+
+$ ``git-clone https://github.com/n0madic/git-clone.git``
+
+Clone to another dir:  
+$ ``git-clone https://github.com/n0madic/git-clone.git foo``  
+$ ``git-clone https://github.com/n0madic/git-clone.git ~/bar``
+
+Cloning specific branch:  
+$ ``git-clone -b develop https://github.com/n0madic/git-clone.git``  
+Note: if the repository already cloned, it will simply switch the branch, and local changes will be discarded.
+
+Download a specific tag:  
+$ ``git-clone -b tags/v0.1.0 https://github.com/n0madic/git-clone.git``  
+
+Pull if repository already cloned (if not then just clone):  
+$ ``git-clone --pull https://github.com/n0madic/git-clone.git``
+
+Use custom private key from file:  
+$ ``git-clone --identity ~/.ssh/id_rsa.foo git@github.com:n0madic/git-clone.git``
+
+Use custom private key from environment:  
+$ ``export GIT_CLONE_KEY=$(cat ~/.ssh/id_rsa.bar)``  
+$ ``git-clone git@github.com:n0madic/git-clone.git``  
+Note: --identity flag has a higher priority over the environment.
