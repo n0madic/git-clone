@@ -16,17 +16,17 @@ import (
 var (
 	Repository = kingpin.Arg("repository", "The repository to clone from.").Required().String()
 	Directory  = kingpin.Arg("directory", "The name of a new directory to clone into.").String()
-	Identity   = kingpin.Flag("identity", "Selects a file from which the identity (private key) for public key ssh authentication is read.").Short('i').PlaceHolder("<file>").String()
+	Identity   = kingpin.Flag("identity", "Selects a file from which the identity (private key) for public key ssh authentication is read. Or use the environment variable GIT_CLONE_KEY for this.").Short('i').PlaceHolder("<file>").String()
 	Recursive  = kingpin.Flag("recursive", "After the clone is created, initialize all submodules within, using their default settings.").Short('r').Bool()
 	Pull       = kingpin.Flag("pull", "Incorporates changes from a remote repository into the current branch (if already cloned).").Short('p').Bool()
 	RemoteName = kingpin.Flag("origin", "Instead of using the remote name origin to keep track of the upstream repository, use <name>.").Short('o').PlaceHolder("<name>").Default("origin").String()
 	Branch     = kingpin.Flag("branch", "Instead of pointing the newly created HEAD to the branch pointed to by the cloned repository’s HEAD, point to <name> branch instead. "+
 		"If the repository already cloned, it will simply switch the branch, and local changes will be discarded.").Short('b').PlaceHolder("<name>").String()
-	SingleBranch  = kingpin.Flag("single-branch", "Clone only the history leading to the tip of a single branch, either specified by the --branch option or the primary branch remote’s HEAD points at.").Bool()
-	Depth                = kingpin.Flag("depth", "Create a shallow clone with a history truncated to the specified number of commits.").Short('d').PlaceHolder("<depth>").Int()
-	Tags                  = kingpin.Flag("tags", "Tag mode (all|no|following)").Default("all").Enum("all", "no", "following")
-	LastCommit      = kingpin.Flag("last", "Print the latest commit.").Short('l').Bool()
-	IdentityFile ssh.AuthMethod
+	SingleBranch = kingpin.Flag("single-branch", "Clone only the history leading to the tip of a single branch, either specified by the --branch option or the primary branch remote’s HEAD points at.").Bool()
+	Depth        = kingpin.Flag("depth", "Create a shallow clone with a history truncated to the specified number of commits.").Short('d').PlaceHolder("<depth>").Int()
+	Tags         = kingpin.Flag("tags", "Tag mode (all|no|following)").Default("all").Enum("all", "no", "following")
+	LastCommit   = kingpin.Flag("last", "Print the latest commit.").Short('l').Bool()
+	IdentityKey  ssh.AuthMethod
 	err          error
 )
 
@@ -56,10 +56,15 @@ func main() {
 		SingleBranch: *SingleBranch,
 		Progress:     os.Stdout,
 	}
-	if len(*Identity) > 0 {
-		IdentityFile, err = ssh.NewPublicKeysFromFile("git", *Identity, "")
+	if len(os.Getenv("GIT_CLONE_KEY")) > 0 {
+		IdentityKey, err = ssh.NewPublicKeys("git", []byte(os.Getenv("GIT_CLONE_KEY")), "")
 		CheckIfError(err)
-		CloneOptions.Auth = IdentityFile
+		CloneOptions.Auth = IdentityKey
+	}
+	if len(*Identity) > 0 {
+		IdentityKey, err = ssh.NewPublicKeysFromFile("git", *Identity, "")
+		CheckIfError(err)
+		CloneOptions.Auth = IdentityKey
 	}
 	branchRef := plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", *Branch))
 	if strings.HasPrefix(*Branch, "tags/") && *Tags != "no" {
@@ -125,8 +130,11 @@ func main() {
 				SingleBranch:  *SingleBranch,
 				Progress:      os.Stdout,
 			}
+			if len(os.Getenv("GIT_CLONE_KEY")) > 0 {
+				PullOptions.Auth = IdentityKey
+			}
 			if len(*Identity) > 0 {
-				PullOptions.Auth = IdentityFile
+				PullOptions.Auth = IdentityKey
 			}
 			if *Recursive {
 				PullOptions.RecurseSubmodules = git.DefaultSubmoduleRecursionDepth
