@@ -62,11 +62,12 @@ func main() {
 	if *Recursive {
 		CloneOptions.RecurseSubmodules = git.DefaultSubmoduleRecursionDepth
 	}
-	if *Tags == "all" {
+	switch *Tags {
+	case "all":
 		CloneOptions.Tags = git.AllTags
-	} else if *Tags == "no" {
+	case "no":
 		CloneOptions.Tags = git.NoTags
-	} else if *Tags == "following" {
+	case "following":
 		CloneOptions.Tags = git.TagFollowing
 	}
 
