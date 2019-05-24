@@ -3,7 +3,6 @@ go:
 - 1.x
 script:
 - go get -t ./...
-- go get golang.org/x/sys/windows
 - GOOS=linux   GOARCH=386   go build -o git-clone-$TRAVIS_TAG-linux-i386
 - GOOS=linux   GOARCH=amd64 go build -o git-clone-$TRAVIS_TAG-linux-amd64
 - GOOS=windows GOARCH=386   go build -o git-clone-$TRAVIS_TAG-windows-i386.exe
