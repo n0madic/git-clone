@@ -8,8 +8,8 @@ builds:
   ignore:
   - goos: darwin
     goarch: 386
-archive:
-  replacements:
+archives:
+- replacements:
     386: i386
     amd64: x86_64
 checksum:
