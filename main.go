@@ -146,8 +146,9 @@ func main() {
 				checkIfError(err)
 			}
 		}
+	} else {
+		checkIfError(err)
 	}
-	checkIfError(err)
 
 	if opts.LastCommit {
 		fmt.Println()
