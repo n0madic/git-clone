@@ -6,11 +6,11 @@ import (
 	"path"
 	"strings"
 
+	"github.com/fatih/color"
+	"github.com/jessevdk/go-flags"
 	"gopkg.in/src-d/go-git.v4"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport/ssh"
-	"github.com/jessevdk/go-flags"
-	"github.com/fatih/color"
 )
 
 var opts struct {
@@ -29,7 +29,7 @@ var opts struct {
 	LastCommit   bool   `long:"last" short:"l" description:"Print the latest commit."`
 }
 
-func CheckIfError(err error) {
+func checkIfError(err error) {
 	if err == nil {
 		return
 	}
@@ -65,7 +65,7 @@ func main() {
 		} else {
 			IdentityKey, err = ssh.NewPublicKeysFromFile("git", opts.Identity, "")
 		}
-		CheckIfError(err)
+		checkIfError(err)
 		CloneOptions.Auth = IdentityKey
 	}
 	branchRef := plumbing.ReferenceName(fmt.Sprintf("refs/heads/%s", opts.Branch))
@@ -93,13 +93,13 @@ func main() {
 		color.Yellow("Repository already exists!")
 
 		r, err := git.PlainOpen(Destination)
-		CheckIfError(err)
+		checkIfError(err)
 
 		w, err := r.Worktree()
-		CheckIfError(err)
+		checkIfError(err)
 
 		ref, err := r.Head()
-		CheckIfError(err)
+		checkIfError(err)
 
 		if len(opts.Branch) > 0 && !strings.HasSuffix(ref.Name().String(), opts.Branch) {
 			color.Cyan("Checkout remote branch %s", opts.Branch)
@@ -109,18 +109,19 @@ func main() {
 			})
 			if err == plumbing.ErrReferenceNotFound {
 				remoteRef, err := r.Reference(plumbing.ReferenceName(fmt.Sprintf("refs/remotes/%s/%s", opts.RemoteName, opts.Branch)), true)
-				CheckIfError(err)
+				checkIfError(err)
 				err = w.Checkout(&git.CheckoutOptions{
 					Branch: branchRef,
 					Hash:   remoteRef.Hash(),
 					Create: true,
 					Force:  true,
 				})
+				checkIfError(err)
 			} else {
-				CheckIfError(err)
+				checkIfError(err)
 			}
 			ref, err = r.Head()
-			CheckIfError(err)
+			checkIfError(err)
 		}
 
 		if opts.Pull && ref.Name().IsBranch() {
@@ -142,27 +143,26 @@ func main() {
 			if err == git.NoErrAlreadyUpToDate {
 				color.Green(err.Error())
 			} else {
-				CheckIfError(err)
+				checkIfError(err)
 			}
 		}
-	} else if err != nil {
-		CheckIfError(err)
 	}
+	checkIfError(err)
 
 	if opts.LastCommit {
 		fmt.Println()
 
 		if r == nil {
 			r, err = git.PlainOpen(Destination)
-			CheckIfError(err)
+			checkIfError(err)
 		}
 
 		ref, err := r.Head()
-		CheckIfError(err)
+		checkIfError(err)
 		color.Green("On branch %s", path.Base(ref.Name().String()))
 
 		commit, err := r.CommitObject(ref.Hash())
-		CheckIfError(err)
+		checkIfError(err)
 		fmt.Print("Show last ")
 		fmt.Println(commit)
 	}
