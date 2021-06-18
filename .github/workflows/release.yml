@@ -1,8 +1,8 @@
 name: Release
 on:
-  create:
+  push:
     tags:
-      - v*
+      - 'v*'
 
 jobs:
   release:
@@ -11,6 +11,8 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Create release on GitHub
         uses: docker://goreleaser/goreleaser:latest
