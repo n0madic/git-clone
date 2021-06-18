@@ -1,9 +1,9 @@
 module github.com/n0madic/git-clone
 
-go 1.12
+go 1.15
 
 require (
-	github.com/fatih/color v1.9.0
-	github.com/jessevdk/go-flags v1.4.0
-	gopkg.in/src-d/go-git.v4 v4.13.1
+	github.com/fatih/color v1.12.0
+	github.com/go-git/go-git/v5 v5.4.2
+	github.com/jessevdk/go-flags v1.5.0
 )
