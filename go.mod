@@ -3,9 +3,9 @@ module github.com/n0madic/git-clone
 go 1.25.0
 
 require (
-	github.com/fatih/color v1.19.0
 	github.com/go-git/go-git/v5 v5.17.1
-	github.com/jessevdk/go-flags v1.6.1
+	github.com/kevinburke/ssh_config v1.6.0
+	github.com/spf13/pflag v1.0.10
 )
 
 require (
@@ -20,10 +20,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
-	github.com/kevinburke/ssh_config v1.6.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/pjbgf/sha1cd v0.5.0 // indirect
 	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/skeema/knownhosts v1.3.2 // indirect
