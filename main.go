@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/transport"
 	"github.com/spf13/pflag"
 )
 
@@ -595,8 +596,8 @@ func parseConfigEntries(rawEntries []string) ([]configEntry, error) {
 }
 
 func parseConfigEntry(raw string) (configEntry, error) {
-	idx := strings.IndexByte(raw, '=')
-	if idx <= 0 {
+	keyPath, value, hasEquals := strings.Cut(raw, "=")
+	if !hasEquals || keyPath == "" {
 		return configEntry{}, &cliError{
 			code:      exitUsage,
 			prefix:    "error",
@@ -605,19 +606,29 @@ func parseConfigEntry(raw string) (configEntry, error) {
 		}
 	}
 
-	keyPath := raw[:idx]
-	value := raw[idx+1:]
 	firstDot := strings.IndexByte(keyPath, '.')
-	lastDot := strings.LastIndexByte(keyPath, '.')
-	if firstDot <= 0 || lastDot <= firstDot || lastDot == len(keyPath)-1 {
-		if firstDot > 0 && firstDot == lastDot && firstDot < len(keyPath)-1 {
-			return configEntry{
-				Section: keyPath[:firstDot],
-				Key:     keyPath[firstDot+1:],
-				Value:   value,
-			}, nil
+	if firstDot <= 0 || firstDot == len(keyPath)-1 {
+		return configEntry{}, &cliError{
+			code:      exitUsage,
+			prefix:    "error",
+			message:   fmt.Sprintf("invalid config key `%s`", keyPath),
+			showUsage: true,
 		}
+	}
 
+	lastDot := strings.LastIndexByte(keyPath, '.')
+
+	// section.key (no subsection)
+	if firstDot == lastDot {
+		return configEntry{
+			Section: keyPath[:firstDot],
+			Key:     keyPath[firstDot+1:],
+			Value:   value,
+		}, nil
+	}
+
+	// section.subsection.key
+	if lastDot == len(keyPath)-1 {
 		return configEntry{}, &cliError{
 			code:      exitUsage,
 			prefix:    "error",
@@ -697,19 +708,16 @@ func seen(occurrences []flagOccurrence, name string) bool {
 }
 
 func lastOccurrence(occurrences []flagOccurrence, names ...string) *flagOccurrence {
-	nameSet := make(map[string]struct{}, len(names))
-	for _, name := range names {
-		nameSet[name] = struct{}{}
-	}
-
 	var result *flagOccurrence
 	for i := range occurrences {
-		occurrence := &occurrences[i]
-		if _, ok := nameSet[occurrence.name]; !ok {
-			continue
-		}
-		if result == nil || occurrence.seq > result.seq {
-			result = occurrence
+		o := &occurrences[i]
+		for _, name := range names {
+			if o.name == name {
+				if result == nil || o.seq > result.seq {
+					result = o
+				}
+				break
+			}
 		}
 	}
 
@@ -772,7 +780,7 @@ func destinationFor(opts cloneOptions) string {
 }
 
 func gitEndpointPath(repository string) (string, error) {
-	endpoint, err := gitTransportEndpoint(repository)
+	endpoint, err := transport.NewEndpoint(repository)
 	if err != nil {
 		return "", err
 	}

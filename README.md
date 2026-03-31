@@ -4,6 +4,14 @@
 
 Where `go-git` supports the underlying behavior directly, the utility follows Git-compatible argument names, exit codes, destination checks, and branch or tag checkout semantics. Features that cannot be reproduced faithfully are either accepted as compatibility no-ops or rejected early with a git-like error.
 
+## Installation
+
+```bash
+go install github.com/n0madic/git-clone@latest
+```
+
+Pre-built binaries for Linux, macOS, and Windows are available on the [Releases](https://github.com/n0madic/git-clone/releases) page.
+
 ## Compatibility
 
 ### Supported

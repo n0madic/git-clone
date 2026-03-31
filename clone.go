@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -103,7 +104,7 @@ func cloneOrPull(
 	}
 
 	err = worktree.Pull(pullOptions)
-	if err != nil && err != git.NoErrAlreadyUpToDate {
+	if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
 		return nil, err
 	}
 
@@ -162,7 +163,7 @@ func resolveCloneReference(repository, remoteName, branch string, auth transport
 	}
 
 	remote := git.NewRemote(memory.NewStorage(), &config.RemoteConfig{
-		Name: "origin",
+		Name: remoteName,
 		URLs: []string{repository},
 	})
 
@@ -208,16 +209,15 @@ func branchCandidates(branch string) []plumbing.ReferenceName {
 }
 
 func tagCandidates(branch string) []plumbing.ReferenceName {
-	trimmed := branch
-	if strings.HasPrefix(trimmed, "refs/tags/") {
-		return []plumbing.ReferenceName{plumbing.ReferenceName(trimmed)}
+	if strings.HasPrefix(branch, "refs/tags/") {
+		return []plumbing.ReferenceName{plumbing.ReferenceName(branch)}
 	}
 
-	if strings.HasPrefix(trimmed, "refs/") {
+	if strings.HasPrefix(branch, "refs/") {
 		return nil
 	}
 
-	return []plumbing.ReferenceName{plumbing.NewTagReferenceName(trimmed)}
+	return []plumbing.ReferenceName{plumbing.NewTagReferenceName(branch)}
 }
 
 func hasRemoteReference(refs []*plumbing.Reference, target plumbing.ReferenceName) bool {
@@ -284,7 +284,7 @@ func buildAuthMethod(repository, identity string) (transport.AuthMethod, error) 
 		return nil, nil
 	}
 
-	endpoint, err := gitTransportEndpoint(repository)
+	endpoint, err := transport.NewEndpoint(repository)
 	if err != nil {
 		return nil, err
 	}
@@ -336,15 +336,6 @@ func sshUserForEndpoint(endpoint *transport.Endpoint) (string, error) {
 		prefix:  "fatal",
 		message: "failed to determine SSH user for --identity",
 	}
-}
-
-func gitTransportEndpoint(repository string) (*transport.Endpoint, error) {
-	endpoint, err := transport.NewEndpoint(repository)
-	if err != nil {
-		return nil, err
-	}
-
-	return endpoint, nil
 }
 
 type destinationStatus struct {
@@ -407,7 +398,7 @@ func checkoutBranch(repo *git.Repository, remoteName string, branchRef plumbing.
 	if err == nil {
 		return nil
 	}
-	if err != plumbing.ErrReferenceNotFound {
+	if !errors.Is(err, plumbing.ErrReferenceNotFound) {
 		return err
 	}
 
