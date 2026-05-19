@@ -3,7 +3,7 @@ module github.com/n0madic/git-clone
 go 1.25.0
 
 require (
-	github.com/go-git/go-git/v5 v5.19.0
+	github.com/go-git/go-git/v5 v5.19.1
 	github.com/kevinburke/ssh_config v1.6.0
 	github.com/spf13/pflag v1.0.10
 )
